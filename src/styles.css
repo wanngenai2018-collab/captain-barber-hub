@@ -144,8 +144,6 @@
   border-radius: 0.5rem;
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
   box-shadow: 0 6px 20px -8px oklch(0.72 0.14 82 / 0.6);
-}
-@utility btn-gold {
   &:hover {
     transform: translateY(-2px);
     filter: brightness(1.05);
@@ -165,8 +163,6 @@
   border-radius: 0.5rem;
   border: 1px solid var(--color-gold);
   transition: all 0.2s ease;
-}
-@utility btn-outline-gold {
   &:hover {
     background: var(--color-gold);
     color: var(--color-gold-foreground);
@@ -182,10 +178,9 @@
   opacity: 0;
   transform: translateY(24px);
   transition: opacity 0.7s ease, transform 0.7s ease;
-}
-@utility reveal {
   &.is-visible {
     opacity: 1;
     transform: translateY(0);
   }
 }
+
