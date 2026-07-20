@@ -6,7 +6,7 @@ export const SITE = {
   line: "@captainbarber",
   lineUrl: "https://line.me/R/ti/p/@captainbarber",
   facebook: "https://web.facebook.com/profile.php?id=100089549602867",
-  messenger: "https://web.facebook.com/profile.php?id=100089549602867",
+  messenger: "https://m.me/100089549602867",
   address: "99 ถนนสุขุมวิท ตำบลตัวอย่าง อำเภอตัวอย่าง จังหวัดตัวอย่าง 10000",
   addressEn: "99 Sukhumvit Rd., Sample District, Sample City 10000",
   hours: "09:00 - 20:00",
