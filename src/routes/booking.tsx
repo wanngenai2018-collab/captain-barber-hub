@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
-import { CheckCircle2, Facebook, MessageCircle, Phone } from "lucide-react";
+import { CircleCheck as CheckCircle2, Facebook, MessageCircle, Phone } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { Reveal } from "@/components/Reveal";
 import { SITE } from "@/lib/site";
@@ -103,7 +103,19 @@ function Booking() {
                 <label className="mb-1.5 block text-sm font-medium">{tr("f_note")}</label>
                 <textarea name="note" rows={4} maxLength={500} className="input resize-none" />
               </div>
-              <button type="submit" className="btn-gold md:col-span-2 mt-2">{tr("f_submit")}</button>
+              <div className="md:col-span-2 mt-2 grid gap-3 sm:grid-cols-2">
+                <button type="submit" className="btn-gold w-full">
+                  {tr("f_submit")}
+                </button>
+                <a
+                  href={SITE.messenger}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0084FF] px-6 py-3 font-semibold text-white hover:brightness-110 transition"
+                >
+                  <Facebook className="h-5 w-5" /> Messenger
+                </a>
+              </div>
             </form>
 
             <style>{`
