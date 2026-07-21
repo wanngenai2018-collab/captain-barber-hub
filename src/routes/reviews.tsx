@@ -40,25 +40,29 @@ function Reviews() {
   const [formError, setFormError] = useState<string | null>(null);
   const [formOk, setFormOk] = useState(false);
 
+  const loadReviews = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("reviews")
+      .select("name, role, rating, message")
+      .eq("approved", true)
+      .order("created_at", { ascending: false });
+    if (!error && data) {
+      const mapped = (data as Pick<Review, "name" | "role" | "rating" | "message">[]).map((d) => ({
+        n: d.name,
+        role: d.role ?? "",
+        r: d.message,
+      }));
+      setDbReviews(mapped);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("reviews")
-        .select("name, role, rating, message")
-        .eq("approved", true)
-        .order("created_at", { ascending: false });
       if (cancelled) return;
-      if (!error && data) {
-        const mapped = (data as Pick<Review, "name" | "role" | "rating" | "message">[]).map((d) => ({
-          n: d.name,
-          role: d.role ?? "",
-          r: d.message,
-        }));
-        setDbReviews(mapped);
-      }
-      setLoading(false);
+      await loadReviews();
     })();
     return () => {
       cancelled = true;
@@ -92,7 +96,7 @@ function Reviews() {
       role: form.role.trim() || null,
       rating: form.rating,
       message: form.message.trim(),
-      approved: false,
+      approved: true,
     });
     setSubmitting(false);
     if (error) {
@@ -101,6 +105,8 @@ function Reviews() {
     }
     setFormOk(true);
     setForm({ name: "", role: "", rating: 5, message: "" });
+    setI(0);
+    await loadReviews();
   };
 
   return (
@@ -152,8 +158,8 @@ function Reviews() {
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {lang === "th"
-                ? "รีวิวของคุณจะถูกส่งเพื่อตรวจสอบก่อนนำขึ้นเว็บ"
-                : "Your review will be reviewed before appearing on the site."}
+                ? "รีวิวของคุณจะแสดงบนเว็บทันที"
+                : "Your review will appear on the site immediately."}
             </p>
 
             {formOk && (
@@ -161,8 +167,8 @@ function Reviews() {
                 <CheckCircle2 className="h-5 w-5 text-gold mt-0.5 shrink-0" />
                 <p className="font-semibold text-gold">
                   {lang === "th"
-                    ? "ขอบคุณสำหรับรีวิว! ทีมงานจะตรวจสอบและนำขึ้นเว็บเร็ว ๆ นี้"
-                    : "Thanks for your review! We'll publish it shortly."}
+                    ? "ขอบคุณสำหรับรีวิว! รีวิวของคุณแสดงบนเว็บแล้ว"
+                    : "Thanks for your review! It's now live on the site."}
                 </p>
               </div>
             )}
