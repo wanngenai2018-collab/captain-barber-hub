@@ -68,9 +68,9 @@ export function Navbar() {
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
-          <Link to="/booking" className="hidden md:inline-flex btn-gold text-sm px-4 py-2">
+          <a href={SITE.bookingUrl} target="_blank" rel="noreferrer" className="hidden md:inline-flex btn-gold text-sm px-4 py-2">
             {tr("nav_booking")}
-          </Link>
+          </a>
           <button
             className="lg:hidden inline-flex h-10 w-10 items-center justify-center rounded-md border border-border"
             onClick={() => setOpen((v) => !v)}
