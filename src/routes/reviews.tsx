@@ -91,22 +91,29 @@ function Reviews() {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from("reviews").insert({
+    const payload = {
       name: form.name.trim(),
       role: form.role.trim() || null,
       rating: form.rating,
       message: form.message.trim(),
       approved: true,
-    });
+    };
+    const insertPromise = supabase.from("reviews").insert(payload);
+    const timeout = new Promise<{ error: { message: string } }>((resolve) =>
+      setTimeout(() => resolve({ error: { message: "timeout" } }), 8000),
+    );
+    const { error } = (await Promise.race([insertPromise, timeout])) as { error: { message: string } | null };
     setSubmitting(false);
     if (error) {
       setFormError(lang === "th" ? "ส่งรีวิวไม่สำเร็จ กรุณาลองอีกครั้ง" : "Failed to submit. Please try again.");
       return;
     }
+    // Optimistically show the new review right away
+    setDbReviews((prev) => [{ n: payload.name, role: payload.role ?? "", r: payload.message }, ...prev]);
     setFormOk(true);
     setForm({ name: "", role: "", rating: 5, message: "" });
     setI(0);
-    await loadReviews();
+    loadReviews();
   };
 
   return (

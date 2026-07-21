@@ -62,7 +62,7 @@ function Home() {
             {tr("hero_sub")}
           </p>
           <div className="mt-8 flex flex-wrap gap-3 animate-fade-in">
-            <Link to="/booking" className="btn-gold">{tr("hero_book")} <ChevronRight className="h-4 w-4" /></Link>
+            <a href={SITE.bookingUrl} target="_blank" rel="noreferrer" className="btn-gold">{tr("hero_book")} <ChevronRight className="h-4 w-4" /></a>
             <a href={`tel:${SITE.phoneTel}`} className="btn-outline-gold text-white">
               <Phone className="h-4 w-4" /> {tr("hero_call")}
             </a>
@@ -204,7 +204,7 @@ function Home() {
               <h2 className="mt-3 text-3xl md:text-4xl font-bold">{tr("promo_title")}</h2>
               <p className="mt-3 max-w-xl text-white/80">{tr("promo_desc")}</p>
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link to="/booking" className="btn-gold">{tr("hero_book")}</Link>
+                <a href={SITE.bookingUrl} target="_blank" rel="noreferrer" className="btn-gold">{tr("hero_book")}</a>
                 <a href={SITE.lineUrl} className="btn-outline-gold text-white">LINE {SITE.line}</a>
               </div>
             </div>

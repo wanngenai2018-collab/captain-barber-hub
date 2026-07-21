@@ -34,7 +34,7 @@ export function Footer() {
           <ul className="space-y-2 text-sm">
             <li><Link to="/services" className="hover:text-gold">{tr("nav_services")}</Link></li>
             <li><Link to="/gallery" className="hover:text-gold">{tr("nav_gallery")}</Link></li>
-            <li><Link to="/booking" className="hover:text-gold">{tr("nav_booking")}</Link></li>
+            <li><a href={SITE.bookingUrl} target="_blank" rel="noreferrer" className="hover:text-gold">{tr("nav_booking")}</a></li>
             <li className="flex gap-3 pt-2">
               <a href={SITE.lineUrl} aria-label="LINE" className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-border hover:border-gold hover:text-gold"><MessageCircle className="h-4 w-4" /></a>
               <a href={SITE.facebook} aria-label="Facebook" className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-border hover:border-gold hover:text-gold"><Facebook className="h-4 w-4" /></a>
