@@ -4,6 +4,7 @@ import { Menu, Moon, Sun, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import { Logo } from "./Logo";
+import { SITE } from "@/lib/site";
 
 export function Navbar() {
   const { tr, lang, setLang } = useI18n();
@@ -95,13 +96,15 @@ export function Navbar() {
                 {l.label}
               </Link>
             ))}
-            <Link
-              to="/booking"
+            <a
+              href={SITE.bookingUrl}
+              target="_blank"
+              rel="noreferrer"
               onClick={() => setOpen(false)}
               className="mt-2 btn-gold text-sm"
             >
               {tr("nav_booking")}
-            </Link>
+            </a>
             <div className="mt-3 flex gap-2">
               <button
                 onClick={() => setLang(lang === "th" ? "en" : "th")}
