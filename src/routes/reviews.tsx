@@ -1,9 +1,50 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useEffect, useState, type FormEvent } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { ChevronLeft, ChevronRight, Star, Loader as Loader2, CircleCheck as CheckCircle2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { Reveal } from "@/components/Reveal";
-import { supabase, type Review } from "@/lib/supabase";
+import { getApprovedReviews, submitReview } from "@/lib/reviews.functions";
+import type { ReviewInput, ReviewItem } from "@/lib/reviews.schema";
+
+const reviewsQueryOptions = queryOptions({
+  queryKey: ["reviews", "approved"],
+  queryFn: () => getApprovedReviews(),
+});
+
+function ReviewsErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+  const router = useRouter();
+
+  return (
+    <section className="section">
+      <div className="container-x text-center">
+        <h1 className="text-3xl font-bold">Reviews did not load</h1>
+        <p className="mt-3 text-sm text-muted-foreground">{error.message}</p>
+        <button
+          className="btn-gold mt-6"
+          onClick={() => {
+            router.invalidate();
+            reset();
+          }}
+        >
+          Try again
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function ReviewsNotFoundComponent() {
+  return (
+    <section className="section">
+      <div className="container-x text-center">
+        <h1 className="text-3xl font-bold">Reviews not found</h1>
+        <p className="mt-3 text-sm text-muted-foreground">ไม่พบหน้ารีวิวที่คุณค้นหา</p>
+      </div>
+    </section>
+  );
+}
 
 export const Route = createFileRoute("/reviews")({
   head: () => ({
@@ -11,63 +52,54 @@ export const Route = createFileRoute("/reviews")({
       { title: "รีวิวลูกค้า — กัปตัน Barber" },
       { name: "description", content: "รีวิวจากลูกค้าจริงของ Captain Barber ร้านตัดผมชายเชี่ยวชาญ Fade" },
       { property: "og:title", content: "รีวิวลูกค้า — กัปตัน Barber" },
+      { property: "og:description", content: "อ่านรีวิวลูกค้าจริงของ Captain Barber และแชร์ประสบการณ์หลังใช้บริการ" },
+      { property: "og:type", content: "website" },
       { property: "og:url", content: "/reviews" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "รีวิวลูกค้า — กัปตัน Barber" },
+      { name: "twitter:description", content: "อ่านรีวิวลูกค้าจริงของ Captain Barber และแชร์ประสบการณ์หลังใช้บริการ" },
     ],
     links: [{ rel: "canonical", href: "/reviews" }],
   }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(reviewsQueryOptions),
   component: Reviews,
+  errorComponent: ReviewsErrorComponent,
+  notFoundComponent: ReviewsNotFoundComponent,
 });
 
-const seedReviews = [
-  { n: "คุณเอก", role: "พนักงานออฟฟิศ", r: "ตัด Fade เนี้ยบมากพี่ ให้คำแนะนำทรงที่เหมาะกับหน้า ไปเป็นลูกค้าประจำแน่นอน ราคาก็สบายกระเป๋า" },
-  { n: "คุณโบ๊ท", role: "นักศึกษา", r: "ร้านสะอาด แอร์เย็น ช่างใจดี ราคาไม่แพง มาตัดทุกเดือน เพื่อน ๆ ถามหมดว่าตัดที่ไหน" },
-  { n: "คุณจูน", role: "คุณแม่", r: "พาลูกชายมาตัด เด็กติดใจ ไม่ร้องเลย ช่างเก่งจริง ๆ ใจเย็นกับเด็กมาก" },
-  { n: "คุณต้น", role: "ครีเอเตอร์", r: "ทรงมิดฟาดที่ผมอยากได้เป๊ะตามที่คุยไว้ ทำงานปราณีต ใช้เวลาไม่นานแต่งานออกมาโปร" },
-  { n: "คุณโอ๊ค", role: "ฟรีแลนซ์", r: "โกนหนวดผ้าร้อนที่นี่ฟินมาก ผ่อนคลายเหมือนไปสปา จะกลับมาแน่นอน" },
-  { n: "คุณเจมส์", role: "วิศวกร", r: "ย้อมสีบลอนด์ให้ผม สีสวยไม่เพี้ยน ช่างแนะนำการดูแลผมหลังย้อมด้วย ประทับใจ" },
+const seedReviews: ReviewItem[] = [
+  { n: "คุณเอก", role: "พนักงานออฟฟิศ", rating: 5, r: "ตัด Fade เนี้ยบมากพี่ ให้คำแนะนำทรงที่เหมาะกับหน้า ไปเป็นลูกค้าประจำแน่นอน ราคาก็สบายกระเป๋า" },
+  { n: "คุณโบ๊ท", role: "นักศึกษา", rating: 5, r: "ร้านสะอาด แอร์เย็น ช่างใจดี ราคาไม่แพง มาตัดทุกเดือน เพื่อน ๆ ถามหมดว่าตัดที่ไหน" },
+  { n: "คุณจูน", role: "คุณแม่", rating: 5, r: "พาลูกชายมาตัด เด็กติดใจ ไม่ร้องเลย ช่างเก่งจริง ๆ ใจเย็นกับเด็กมาก" },
+  { n: "คุณต้น", role: "ครีเอเตอร์", rating: 5, r: "ทรงมิดฟาดที่ผมอยากได้เป๊ะตามที่คุยไว้ ทำงานปราณีต ใช้เวลาไม่นานแต่งานออกมาโปร" },
+  { n: "คุณโอ๊ค", role: "ฟรีแลนซ์", rating: 5, r: "โกนหนวดผ้าร้อนที่นี่ฟินมาก ผ่อนคลายเหมือนไปสปา จะกลับมาแน่นอน" },
+  { n: "คุณเจมส์", role: "วิศวกร", rating: 5, r: "ย้อมสีบลอนด์ให้ผม สีสวยไม่เพี้ยน ช่างแนะนำการดูแลผมหลังย้อมด้วย ประทับใจ" },
 ];
-
-type ReviewItem = { n: string; role: string; r: string };
 
 function Reviews() {
   const { lang } = useI18n();
   const [i, setI] = useState(0);
-  const [dbReviews, setDbReviews] = useState<ReviewItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: dbReviews } = useSuspenseQuery(reviewsQueryOptions);
+  const queryClient = useQueryClient();
+  const submitReviewFn = useServerFn(submitReview);
 
   const [form, setForm] = useState({ name: "", role: "", rating: 5, message: "" });
-  const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formOk, setFormOk] = useState(false);
 
-  const loadReviews = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("reviews")
-      .select("name, role, rating, message")
-      .eq("approved", true)
-      .order("created_at", { ascending: false });
-    if (!error && data) {
-      const mapped = (data as Pick<Review, "name" | "role" | "rating" | "message">[]).map((d) => ({
-        n: d.name,
-        role: d.role ?? "",
-        r: d.message,
-      }));
-      setDbReviews(mapped);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (cancelled) return;
-      await loadReviews();
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const submitMutation = useMutation({
+    mutationFn: submitReviewFn,
+    onSuccess: (review) => {
+      queryClient.setQueryData<ReviewItem[]>(reviewsQueryOptions.queryKey, (current = []) => [review, ...current]);
+      queryClient.invalidateQueries({ queryKey: reviewsQueryOptions.queryKey });
+      setFormOk(true);
+      setForm({ name: "", role: "", rating: 5, message: "" });
+      setI(0);
+    },
+    onError: () => {
+      setFormError(lang === "th" ? "ส่งรีวิวไม่สำเร็จ กรุณาลองอีกครั้ง" : "Failed to submit. Please try again.");
+    },
+  });
 
   const allReviews: ReviewItem[] = [...dbReviews, ...seedReviews];
 
@@ -79,9 +111,10 @@ function Reviews() {
 
   const active = allReviews[i] ?? allReviews[0];
 
-  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFormError(null);
+    setFormOk(false);
     if (form.name.trim().length < 2) {
       setFormError(lang === "th" ? "กรุณากรอกชื่อ" : "Please enter your name");
       return;
@@ -90,30 +123,13 @@ function Reviews() {
       setFormError(lang === "th" ? "กรุณาเขียนรีวิวอย่างน้อย 5 ตัวอักษร" : "Review must be at least 5 characters");
       return;
     }
-    setSubmitting(true);
-    const payload = {
+    const payload: ReviewInput = {
       name: form.name.trim(),
       role: form.role.trim() || null,
       rating: form.rating,
       message: form.message.trim(),
-      approved: true,
     };
-    const insertPromise = supabase.from("reviews").insert(payload);
-    const timeout = new Promise<{ error: { message: string } }>((resolve) =>
-      setTimeout(() => resolve({ error: { message: "timeout" } }), 8000),
-    );
-    const { error } = (await Promise.race([insertPromise, timeout])) as { error: { message: string } | null };
-    setSubmitting(false);
-    if (error) {
-      setFormError(lang === "th" ? "ส่งรีวิวไม่สำเร็จ กรุณาลองอีกครั้ง" : "Failed to submit. Please try again.");
-      return;
-    }
-    // Optimistically show the new review right away
-    setDbReviews((prev) => [{ n: payload.name, role: payload.role ?? "", r: payload.message }, ...prev]);
-    setFormOk(true);
-    setForm({ name: "", role: "", rating: 5, message: "" });
-    setI(0);
-    loadReviews();
+    await submitMutation.mutateAsync({ data: payload });
   };
 
   return (
@@ -137,7 +153,7 @@ function Reviews() {
           <Reveal delay={120}>
             <div className="mt-12 max-w-3xl mx-auto rounded-2xl border border-gold/30 bg-card p-8 md:p-12 text-center relative shadow-[var(--shadow-elegant)]">
               <div className="flex justify-center gap-1 mb-4">
-                {Array.from({ length: 5 }).map((_, j) => <Star key={j} className="h-4 w-4 fill-gold text-gold" />)}
+                  {Array.from({ length: 5 }).map((_, j) => <Star key={j} className={`h-4 w-4 ${j < active.rating ? "fill-gold text-gold" : "text-muted-foreground"}`} />)}
               </div>
               <p className="text-lg md:text-xl leading-relaxed">"{active.r}"</p>
               <p className="mt-6 font-bold text-gold">{active.n}</p>
@@ -247,8 +263,8 @@ function Reviews() {
                   required
                 />
               </div>
-              <button type="submit" disabled={submitting} className="btn-gold w-full sm:w-auto sm:justify-center disabled:opacity-60">
-                {submitting ? (
+              <button type="submit" disabled={submitMutation.isPending} className="btn-gold w-full sm:w-auto sm:justify-center disabled:opacity-60">
+                {submitMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     {lang === "th" ? "กำลังส่ง..." : "Submitting..."}
@@ -284,7 +300,7 @@ function Reviews() {
             <Reveal key={j} delay={j * 60}>
               <div className="h-full rounded-xl border border-border bg-card p-6">
                 <div className="flex gap-0.5 mb-3">
-                  {Array.from({ length: 5 }).map((_, k) => <Star key={k} className="h-4 w-4 fill-gold text-gold" />)}
+                  {Array.from({ length: 5 }).map((_, k) => <Star key={k} className={`h-4 w-4 ${k < r.rating ? "fill-gold text-gold" : "text-muted-foreground"}`} />)}
                 </div>
                 <p className="text-sm leading-relaxed">"{r.r}"</p>
                 <div className="mt-4">
@@ -295,12 +311,6 @@ function Reviews() {
             </Reveal>
           ))}
         </div>
-
-        {loading && (
-          <div className="mt-10 flex justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-gold" />
-          </div>
-        )}
       </div>
     </section>
   );
