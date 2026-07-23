@@ -200,40 +200,37 @@ function Reviews() {
   return (
     <main className="section">
       <div className="container-x">
-        <Reveal>
-          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-gold font-semibold">Captain Barber Reviews</p>
-              <h1 className="mt-3 text-4xl md:text-6xl font-bold leading-tight">
-                {lang === "th" ? "รีวิวลูกค้าแบบเรียลไทม์" : "Real-time customer reviews"}
-              </h1>
-              <p className="mt-4 max-w-2xl text-muted-foreground leading-relaxed">
-                {lang === "th"
-                  ? "พิมพ์รีวิวของคุณ กดส่ง แล้วรีวิวจะแสดงบนหน้าเว็บทันที พร้อมบันทึกเข้าระบบให้ลูกค้าคนอื่นเห็น"
-                  : "Write your review, submit it, and it appears on the website instantly while being saved for future visitors."}
-              </p>
-            </div>
+        <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-gold font-semibold">Captain Barber Reviews</p>
+            <h1 className="mt-3 text-4xl md:text-6xl font-bold leading-tight">
+              {lang === "th" ? "รีวิวลูกค้าแบบเรียลไทม์" : "Real-time customer reviews"}
+            </h1>
+            <p className="mt-4 max-w-2xl text-muted-foreground leading-relaxed">
+              {lang === "th"
+                ? "พิมพ์รีวิวของคุณ กดส่ง แล้วรีวิวจะแสดงบนหน้าเว็บทันที พร้อมบันทึกเข้าระบบให้ลูกค้าคนอื่นเห็น"
+                : "Write your review, submit it, and it appears on the website instantly while being saved for future visitors."}
+            </p>
+          </div>
 
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-xl border border-border bg-card p-4">
-                <p className="text-2xl font-bold text-gold">4.9</p>
-                <p className="mt-1 text-xs text-muted-foreground">Rating</p>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-4">
-                <p className="text-2xl font-bold text-gold">320+</p>
-                <p className="mt-1 text-xs text-muted-foreground">Reviews</p>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-4">
-                <p className="text-2xl font-bold text-gold">Live</p>
-                <p className="mt-1 text-xs text-muted-foreground">Instant</p>
-              </div>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="rounded-xl border border-border bg-card p-4">
+              <p className="text-2xl font-bold text-gold">4.9</p>
+              <p className="mt-1 text-xs text-muted-foreground">Rating</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4">
+              <p className="text-2xl font-bold text-gold">320+</p>
+              <p className="mt-1 text-xs text-muted-foreground">Reviews</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4">
+              <p className="text-2xl font-bold text-gold">Live</p>
+              <p className="mt-1 text-xs text-muted-foreground">Instant</p>
             </div>
           </div>
-        </Reveal>
+        </div>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <Reveal delay={80}>
-            <section id="write-review" className="rounded-2xl border border-gold/30 bg-card p-6 md:p-8 shadow-[var(--shadow-elegant)]">
+          <section id="write-review" className="rounded-2xl border border-gold/30 bg-card p-6 md:p-8 shadow-[var(--shadow-elegant)]">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.24em] text-gold font-semibold">Write Review</p>
@@ -346,11 +343,9 @@ function Reviews() {
                   )}
                 </button>
               </form>
-            </section>
-          </Reveal>
+          </section>
 
-          <Reveal delay={120}>
-            <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
+          <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.24em] text-gold font-semibold">Featured</p>
@@ -406,8 +401,7 @@ function Reviews() {
                   </div>
                 </div>
               )}
-            </section>
-          </Reveal>
+          </section>
         </div>
 
         <section className="mt-12">
