@@ -6,7 +6,7 @@ export const getApprovedReviews = createServerFn({ method: "GET" }).handler(asyn
   const supabase = createPublicReviewsClient();
   const { data, error } = await supabase
     .from("reviews")
-    .select("name, role, rating, message, created_at")
+    .select("id, name, role, rating, message, created_at")
     .eq("approved", true)
     .order("created_at", { ascending: false });
 
@@ -16,6 +16,7 @@ export const getApprovedReviews = createServerFn({ method: "GET" }).handler(asyn
   }
 
   return (data ?? []).map((review) => ({
+    id: review.id,
     n: review.name,
     role: review.role ?? "",
     r: review.message,
@@ -37,7 +38,7 @@ export const submitReview = createServerFn({ method: "POST" })
         message: data.message,
         approved: true,
       })
-      .select("name, role, rating, message, created_at")
+      .select("id, name, role, rating, message, created_at")
       .single();
 
     if (error) {
@@ -46,6 +47,7 @@ export const submitReview = createServerFn({ method: "POST" })
     }
 
     return {
+      id: review.id,
       n: review.name,
       role: review.role ?? "",
       r: review.message,
