@@ -100,6 +100,13 @@ const seedReviews: ReviewItem[] = [
   { id: "seed-6", n: "คุณเจมส์", role: "วิศวกร", rating: 5, r: "ย้อมสีบลอนด์ให้ผม สีสวยไม่เพี้ยน ช่างแนะนำการดูแลผมหลังย้อมด้วย ประทับใจ" },
 ];
 
+type SubmitReviewVariables = { data: ReviewInput };
+type SubmitReviewContext = {
+  previous: ReviewItem[];
+  optimisticId: string;
+  submitted: ReviewInput;
+};
+
 function Reviews() {
   const { lang } = useI18n();
   const [i, setI] = useState(0);
@@ -111,8 +118,8 @@ function Reviews() {
   const [formError, setFormError] = useState<string | null>(null);
   const [formOk, setFormOk] = useState(false);
 
-  const submitMutation = useMutation({
-    mutationFn: submitReviewFn,
+  const submitMutation = useMutation<ReviewItem, Error, SubmitReviewVariables, SubmitReviewContext>({
+    mutationFn: (variables) => submitReviewFn(variables),
     onMutate: async (variables) => {
       await queryClient.cancelQueries({ queryKey: reviewsQueryOptions.queryKey });
       const previous = queryClient.getQueryData<ReviewItem[]>(reviewsQueryOptions.queryKey) ?? [];
