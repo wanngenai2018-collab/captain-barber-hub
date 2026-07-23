@@ -10,9 +10,11 @@ export const reviewInputSchema = z.object({
 export type ReviewInput = z.infer<typeof reviewInputSchema>;
 
 export type ReviewItem = {
+  id?: string;
   n: string;
   role: string;
   r: string;
   rating: number;
   created_at?: string;
+  optimistic?: boolean;
 };
