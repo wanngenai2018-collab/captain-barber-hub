@@ -14,6 +14,114 @@ export type Database = {
   }
   public: {
     Tables: {
+      barbers: {
+        Row: {
+          bio_en: string | null
+          bio_th: string | null
+          created_at: string
+          display_order: number
+          id: string
+          image_url: string | null
+          is_published: boolean
+          name_en: string | null
+          name_th: string | null
+          role_en: string | null
+          role_th: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          bio_en?: string | null
+          bio_th?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          name_en?: string | null
+          name_th?: string | null
+          role_en?: string | null
+          role_th?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          bio_en?: string | null
+          bio_th?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_published?: boolean
+          name_en?: string | null
+          name_th?: string | null
+          role_en?: string | null
+          role_th?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gallery_items: {
+        Row: {
+          after_image_url: string
+          before_image_url: string
+          category: string
+          created_at: string
+          display_order: number
+          id: string
+          is_published: boolean
+          title_en: string
+          title_th: string
+          updated_at: string
+        }
+        Insert: {
+          after_image_url: string
+          before_image_url: string
+          category: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_published?: boolean
+          title_en: string
+          title_th: string
+          updated_at?: string
+        }
+        Update: {
+          after_image_url?: string
+          before_image_url?: string
+          category?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_published?: boolean
+          title_en?: string
+          title_th?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      review_stats: {
+        Row: {
+          id: boolean
+          rating_sum: number
+          total_reviews: number
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          rating_sum?: number
+          total_reviews?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          rating_sum?: number
+          total_reviews?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           approved: boolean
@@ -22,6 +130,7 @@ export type Database = {
           message: string
           name: string
           rating: number
+          reviewer_type: string
           role: string | null
         }
         Insert: {
@@ -31,6 +140,7 @@ export type Database = {
           message: string
           name: string
           rating?: number
+          reviewer_type?: string
           role?: string | null
         }
         Update: {
@@ -40,6 +150,7 @@ export type Database = {
           message?: string
           name?: string
           rating?: number
+          reviewer_type?: string
           role?: string | null
         }
         Relationships: []
