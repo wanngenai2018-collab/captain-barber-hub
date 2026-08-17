@@ -1,28 +1,66 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createPublicReviewsClient } from "./reviews.server";
-import { reviewInputSchema, type ReviewItem } from "./reviews.schema";
+import {
+  REVIEW_FEED_LIMIT,
+  reviewInputSchema,
+  type ReviewItem,
+  type ReviewStats,
+  type ReviewerType,
+  type ReviewsPayload,
+} from "./reviews.schema";
 
-export const getApprovedReviews = createServerFn({ method: "GET" }).handler(async (): Promise<ReviewItem[]> => {
+type ReviewRow = {
+  id: string;
+  name: string;
+  role: string | null;
+  rating: number;
+  message: string;
+  reviewer_type: string;
+  created_at: string;
+};
+
+function toReviewItem(row: ReviewRow): ReviewItem {
+  return {
+    id: row.id,
+    name: row.name,
+    role: row.role ?? "",
+    message: row.message,
+    rating: row.rating,
+    reviewer_type: (row.reviewer_type === "customer" ? "customer" : "general") as ReviewerType,
+    created_at: row.created_at,
+  };
+}
+
+export const getReviewsPayload = createServerFn({ method: "GET" }).handler(async (): Promise<ReviewsPayload> => {
   const supabase = createPublicReviewsClient();
-  const { data, error } = await supabase
-    .from("reviews")
-    .select("id, name, role, rating, message, created_at")
-    .eq("approved", true)
-    .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Failed to load reviews", error);
+  const [reviewsResult, statsResult] = await Promise.all([
+    supabase
+      .from("reviews")
+      .select("id, name, role, rating, message, reviewer_type, created_at")
+      .eq("approved", true)
+      .order("created_at", { ascending: false })
+      .limit(REVIEW_FEED_LIMIT),
+    supabase.from("review_stats").select("total_reviews, rating_sum").maybeSingle(),
+  ]);
+
+  if (reviewsResult.error) {
+    console.error("Failed to load reviews", reviewsResult.error);
     throw new Error("Could not load reviews.");
   }
+  if (statsResult.error) {
+    console.error("Failed to load review stats", statsResult.error);
+    throw new Error("Could not load review stats.");
+  }
 
-  return (data ?? []).map((review) => ({
-    id: review.id,
-    n: review.name,
-    role: review.role ?? "",
-    r: review.message,
-    rating: review.rating,
-    created_at: review.created_at,
-  }));
+  const total = statsResult.data?.total_reviews ?? 0;
+  const ratingSum = Number(statsResult.data?.rating_sum ?? 0);
+  const stats: ReviewStats = {
+    total,
+    average: total > 0 ? Math.round((ratingSum / total) * 10) / 10 : 0,
+  };
+
+  return { reviews: (reviewsResult.data ?? []).map(toReviewItem), stats };
 });
 
 export const submitReview = createServerFn({ method: "POST" })
@@ -36,9 +74,10 @@ export const submitReview = createServerFn({ method: "POST" })
         role: data.role || null,
         rating: data.rating,
         message: data.message,
+        reviewer_type: data.reviewer_type,
         approved: true,
       })
-      .select("id, name, role, rating, message, created_at")
+      .select("id, name, role, rating, message, reviewer_type, created_at")
       .single();
 
     if (error) {
@@ -46,12 +85,5 @@ export const submitReview = createServerFn({ method: "POST" })
       throw new Error("Could not submit review.");
     }
 
-    return {
-      id: review.id,
-      n: review.name,
-      role: review.role ?? "",
-      r: review.message,
-      rating: review.rating,
-      created_at: review.created_at,
-    };
+    return toReviewItem(review as ReviewRow);
   });
