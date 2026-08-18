@@ -1,51 +1,64 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { Reveal } from "@/components/Reveal";
-import ba1 from "@/assets/ba-1.jpg";
-import ba2 from "@/assets/ba-2.jpg";
-import ba3 from "@/assets/ba-3.jpg";
-import ba4 from "@/assets/ba-4.jpg";
+import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
+import { getGalleryItems } from "@/lib/content.functions";
+
+const galleryQueryOptions = queryOptions({
+  queryKey: ["gallery", "items"],
+  queryFn: () => getGalleryItems(),
+});
+
+function GalleryError({ error }: { error: Error }) {
+  return (
+    <section className="section">
+      <div className="container-x text-center">
+        <h1 className="text-3xl font-bold">ผลงานโหลดไม่สำเร็จ</h1>
+        <p className="mt-3 text-sm text-muted-foreground">{error.message}</p>
+      </div>
+    </section>
+  );
+}
 
 export const Route = createFileRoute("/gallery")({
   head: () => ({
     meta: [
       { title: "ผลงาน Before & After — กัปตัน Barber" },
-      { name: "description", content: "ผลงานตัดผมชาย Before & After ทรง Fade, รองทรง, ย้อมสี, โกนหนวด ที่ Captain Barber" },
+      { name: "description", content: "ผลงานตัดผมชาย Before & After ทรง Fade, รองทรง, ย้อมสี, โกนหนวด ที่ Captain Barber เลื่อนเปรียบเทียบก่อน-หลังได้จริง" },
       { property: "og:title", content: "ผลงาน Before & After — กัปตัน Barber" },
+      { property: "og:description", content: "เลื่อนดูภาพก่อน-หลังตัดผมจริงจากลูกค้าของ Captain Barber" },
+      { property: "og:type", content: "website" },
       { property: "og:url", content: "/gallery" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "/gallery" }],
   }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(galleryQueryOptions),
   component: Gallery,
+  errorComponent: GalleryError,
 });
-
-type Cat = "all" | "fade" | "cut" | "color" | "shave";
 
 function Gallery() {
   const { lang } = useI18n();
-  const [cat, setCat] = useState<Cat>("all");
+  const { data: items } = useSuspenseQuery(galleryQueryOptions);
+  const [cat, setCat] = useState<string>("all");
 
-  const items: { src: string; cat: Exclude<Cat, "all">; t: string }[] = [
-    { src: ba1, cat: "fade", t: "Skin Fade + Pompadour" },
-    { src: ba2, cat: "fade", t: "Mid Fade + Side Part" },
-    { src: ba3, cat: "cut", t: lang === "th" ? "ทรงเด็ก" : "Kids Cut" },
-    { src: ba4, cat: "color", t: lang === "th" ? "ย้อมสีบลอนด์" : "Blonde Highlights" },
-    { src: ba1, cat: "cut", t: "Undercut" },
-    { src: ba2, cat: "fade", t: "Low Fade" },
-    { src: ba4, cat: "color", t: lang === "th" ? "ไฮไลท์" : "Ash Highlights" },
-    { src: ba3, cat: "shave", t: lang === "th" ? "โกนคลาสสิก" : "Classic Shave" },
-  ];
+  const categories = useMemo(() => Array.from(new Set(items.map((i) => i.category))), [items]);
+  const filtered = cat === "all" ? items : items.filter((i) => i.category === cat);
 
-  const tabs: { k: Cat; l: string }[] = [
-    { k: "all", l: lang === "th" ? "ทั้งหมด" : "All" },
-    { k: "fade", l: "Fade" },
-    { k: "cut", l: lang === "th" ? "รองทรง" : "Cuts" },
-    { k: "color", l: lang === "th" ? "ย้อมสี" : "Color" },
-    { k: "shave", l: lang === "th" ? "โกนหนวด" : "Shave" },
-  ];
-
-  const filtered = cat === "all" ? items : items.filter((i) => i.cat === cat);
+  const label = (key: string) => {
+    if (key === "all") return lang === "th" ? "ทั้งหมด" : "All";
+    const map: Record<string, [string, string]> = {
+      fade: ["Fade", "Fade"],
+      cut: ["รองทรง", "Cuts"],
+      color: ["ย้อมสี", "Color"],
+      shave: ["โกนหนวด", "Shave"],
+    };
+    const pair = map[key];
+    return pair ? (lang === "th" ? pair[0] : pair[1]) : key;
+  };
 
   return (
     <section className="section">
@@ -53,46 +66,60 @@ function Gallery() {
         <Reveal>
           <div className="max-w-2xl">
             <p className="text-xs uppercase tracking-[0.3em] text-gold font-semibold">Gallery</p>
-            <h1 className="mt-3 text-4xl md:text-5xl font-bold">Before & After</h1>
+            <h1 className="mt-3 text-4xl md:text-5xl font-bold">Before &amp; After</h1>
             <p className="mt-4 text-muted-foreground">
               {lang === "th"
-                ? "ผลงานจริงจากลูกค้าของเรา ทุกภาพจากช่างกัปตันโดยตรง"
-                : "Real client transformations, all cut by Captain."}
+                ? "ลากเส้นแบ่งซ้าย–ขวาเพื่อเปรียบเทียบก่อนตัดและหลังตัดจากผลงานจริง"
+                : "Drag the divider left and right to compare real before and after results."}
             </p>
           </div>
         </Reveal>
 
-        <div className="mt-8 flex flex-wrap gap-2">
-          {tabs.map((t) => (
-            <button
-              key={t.k}
-              onClick={() => setCat(t.k)}
-              className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${
-                cat === t.k
-                  ? "bg-gold text-gold-foreground border-gold"
-                  : "border-border hover:border-gold hover:text-gold"
-              }`}
-            >
-              {t.l}
-            </button>
-          ))}
-        </div>
+        {items.length === 0 ? (
+          <p className="mt-10 rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">
+            {lang === "th" ? "ยังไม่มีผลงานในระบบ" : "No gallery items yet."}
+          </p>
+        ) : (
+          <>
+            <div className="mt-8 flex flex-wrap gap-2">
+              {["all", ...categories].map((key) => (
+                <button
+                  key={key}
+                  onClick={() => setCat(key)}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold border transition ${
+                    cat === key
+                      ? "bg-gold text-gold-foreground border-gold"
+                      : "border-border hover:border-gold hover:text-gold"
+                  }`}
+                >
+                  {label(key)}
+                </button>
+              ))}
+            </div>
 
-        <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((it, i) => (
-            <Reveal key={`${cat}-${i}`} delay={i * 60}>
-              <div className="group relative overflow-hidden rounded-xl border border-border">
-                <img src={it.src} alt={it.t} loading="lazy" className="w-full h-full object-cover aspect-[16/10] transition duration-700 group-hover:scale-110" />
-                <div className="absolute top-3 left-3 rounded-full bg-gold text-gold-foreground text-xs font-bold px-3 py-1">
-                  BEFORE / AFTER
-                </div>
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                  <p className="text-white font-semibold text-sm">{it.t}</p>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((item, i) => (
+                <Reveal key={item.id} delay={(i % 6) * 60}>
+                  <figure className="rounded-2xl border border-border bg-card p-3">
+                    <BeforeAfterSlider
+                      beforeSrc={item.before_image_url}
+                      afterSrc={item.after_image_url}
+                      alt={lang === "th" ? item.title_th : item.title_en}
+                      beforeLabel="BEFORE"
+                      afterLabel="AFTER"
+                    />
+                    <figcaption className="mt-3 flex items-center justify-between gap-3 px-1 pb-1">
+                      <p className="text-sm font-semibold">{lang === "th" ? item.title_th : item.title_en}</p>
+                      <span className="rounded-full border border-gold/40 px-2.5 py-0.5 text-xs font-semibold text-gold">
+                        {label(item.category)}
+                      </span>
+                    </figcaption>
+                  </figure>
+                </Reveal>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </section>
   );
