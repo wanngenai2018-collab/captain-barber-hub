@@ -1,9 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useI18n } from "@/lib/i18n";
 import { Reveal } from "@/components/Reveal";
 import owner from "@/assets/owner.jpg";
 import interior from "@/assets/hero-shop.jpg";
-import { Award, Scissors, Users } from "lucide-react";
+import { Award, Scissors, Users, UserPlus } from "lucide-react";
+import { getBarbers } from "@/lib/content.functions";
+
+const barbersQueryOptions = queryOptions({
+  queryKey: ["barbers"],
+  queryFn: () => getBarbers(),
+});
+
+function AboutError({ error }: { error: Error }) {
+  return (
+    <section className="section">
+      <div className="container-x text-center">
+        <h1 className="text-3xl font-bold">ข้อมูลร้านโหลดไม่สำเร็จ</h1>
+        <p className="mt-3 text-sm text-muted-foreground">{error.message}</p>
+      </div>
+    </section>
+  );
+}
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -11,12 +29,85 @@ export const Route = createFileRoute("/about")({
       { title: "เกี่ยวกับร้าน — กัปตัน Barber" },
       { name: "description", content: "รู้จักช่างกัปตัน เจ้าของร้าน Captain Barber ร้านตัดผมชายที่เปิดมา 3-4 ปี เชี่ยวชาญ Fade และทรงผมชายสมัยใหม่" },
       { property: "og:title", content: "เกี่ยวกับร้าน — กัปตัน Barber" },
+      { property: "og:description", content: "ทีมช่างของ Captain Barber และเรื่องราวของร้านตัดผมชายที่เชี่ยวชาญ Fade" },
+      { property: "og:type", content: "website" },
       { property: "og:url", content: "/about" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "/about" }],
   }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(barbersQueryOptions),
   component: About,
+  errorComponent: AboutError,
 });
+
+function TeamSection() {
+  const { lang } = useI18n();
+  const { data: barbers } = useSuspenseQuery(barbersQueryOptions);
+
+  return (
+    <section className="section">
+      <div className="container-x">
+        <Reveal>
+          <div className="max-w-2xl">
+            <p className="text-xs uppercase tracking-[0.3em] text-gold font-semibold">Our team</p>
+            <h2 className="mt-3 text-3xl md:text-4xl font-bold">
+              {lang === "th" ? "ทีมช่างของเรา" : "Meet the barbers"}
+            </h2>
+          </div>
+        </Reveal>
+
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {barbers.map((barber, i) => {
+            const name = (lang === "th" ? barber.name_th : barber.name_en) ?? barber.name_th ?? barber.name_en;
+            const role = (lang === "th" ? barber.role_th : barber.role_en) ?? barber.role_th ?? barber.role_en;
+            const bio = (lang === "th" ? barber.bio_th : barber.bio_en) ?? barber.bio_th ?? barber.bio_en;
+            const ready = barber.is_published && Boolean(name);
+
+            return (
+              <Reveal key={barber.id} delay={i * 90}>
+                <article className="h-full overflow-hidden rounded-2xl border border-border bg-card transition hover:border-gold/60">
+                  <div className="aspect-[4/5] w-full overflow-hidden bg-background">
+                    {barber.image_url ? (
+                      <img
+                        src={barber.image_url}
+                        alt={name ?? "Captain Barber"}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-muted-foreground">
+                        <UserPlus className="h-8 w-8 text-gold/70" />
+                        <p className="px-6 text-center text-xs">
+                          {lang === "th" ? "พื้นที่สำหรับรูปช่างคนถัดไป" : "Profile photo slot"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-5">
+                    <h3 className="text-lg font-bold">
+                      {ready ? name : lang === "th" ? "ตำแหน่งช่างว่าง" : "Barber slot open"}
+                    </h3>
+                    <p className="mt-1 text-sm font-semibold text-gold">
+                      {ready
+                        ? role
+                        : lang === "th"
+                          ? "รอเพิ่มข้อมูลช่างในระบบหลังบ้าน"
+                          : "Awaiting profile from the admin system"}
+                    </p>
+                    {ready && bio && (
+                      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{bio}</p>
+                    )}
+                  </div>
+                </article>
+              </Reveal>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function About() {
   const { tr, lang } = useI18n();
