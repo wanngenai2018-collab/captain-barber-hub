@@ -1,16 +1,38 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Phone, MessageCircle, Scissors, Star, ShieldCheck, Award, ChevronRight } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { SITE } from "@/lib/site";
 import { Reveal } from "@/components/Reveal";
+import { getReviewsPayload } from "@/lib/reviews.functions";
+import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
+import { getGalleryItems } from "@/lib/content.functions";
 import heroShop from "@/assets/hero-shop.jpg";
 import fade from "@/assets/service-fade.jpg";
 import shave from "@/assets/service-shave.jpg";
 import style from "@/assets/service-style.jpg";
 import color from "@/assets/service-color.jpg";
-import ba1 from "@/assets/ba-1.jpg";
-import ba2 from "@/assets/ba-2.jpg";
-import ba3 from "@/assets/ba-3.jpg";
+
+const homeReviewsQueryOptions = queryOptions({
+  queryKey: ["reviews", "payload"],
+  queryFn: () => getReviewsPayload(),
+});
+
+const homeGalleryQueryOptions = queryOptions({
+  queryKey: ["gallery", "items"],
+  queryFn: () => getGalleryItems(),
+});
+
+function HomeError({ error }: { error: Error }) {
+  return (
+    <section className="section">
+      <div className="container-x text-center">
+        <h1 className="text-3xl font-bold">หน้าแรกโหลดไม่สำเร็จ</h1>
+        <p className="mt-3 text-sm text-muted-foreground">{error.message}</p>
+      </div>
+    </section>
+  );
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,11 +41,23 @@ export const Route = createFileRoute("/")({
     ],
     links: [{ rel: "canonical", href: "/" }],
   }),
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(homeReviewsQueryOptions),
+      context.queryClient.ensureQueryData(homeGalleryQueryOptions),
+    ]);
+  },
   component: Home,
+  errorComponent: HomeError,
 });
 
 function Home() {
   const { tr, lang } = useI18n();
+  const { data: reviewsPayload } = useSuspenseQuery(homeReviewsQueryOptions);
+  const { data: galleryItems } = useSuspenseQuery(homeGalleryQueryOptions);
+  const stats = reviewsPayload.stats;
+  const featuredReviews = reviewsPayload.reviews.slice(0, 3);
+  const featuredGallery = galleryItems.slice(0, 3);
 
   const services = [
     { img: fade, t: lang === "th" ? "Fade / รองทรง" : "Fade / Taper", p: "฿100" },
@@ -71,10 +105,19 @@ function Home() {
             </a>
           </div>
           <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-white/70 animate-fade-in">
-            <div className="flex items-center gap-1">
-              {Array.from({ length: 5 }).map((_, i) => <Star key={i} className="h-4 w-4 fill-gold text-gold" />)}
-              <span className="ml-2">4.9 / 5.0 · 320+ {lang === "th" ? "รีวิว" : "reviews"}</span>
-            </div>
+            {stats.total > 0 && (
+              <div className="flex items-center gap-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`h-4 w-4 ${i < Math.round(stats.average) ? "fill-gold text-gold" : "text-white/40"}`}
+                  />
+                ))}
+                <span className="ml-2">
+                  {stats.average.toFixed(1)} / 5.0 · {stats.total} {lang === "th" ? "รีวิว" : "reviews"}
+                </span>
+              </div>
+            )}
             <span>·</span>
             <span>{tr("footer_hours")}</span>
           </div>
@@ -148,14 +191,19 @@ function Home() {
             </div>
           </Reveal>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {[ba1, ba2, ba3].map((src, i) => (
-              <Reveal key={i} delay={i * 100}>
-                <div className="relative overflow-hidden rounded-xl border border-border">
-                  <img src={src} alt={`Before and After ${i + 1}`} loading="lazy" className="h-full w-full object-cover aspect-[16/10]" />
-                  <div className="absolute top-3 left-3 rounded-full bg-gold text-gold-foreground text-xs font-bold px-3 py-1">
-                    BEFORE / AFTER
-                  </div>
-                </div>
+            {featuredGallery.map((item, i) => (
+              <Reveal key={item.id} delay={i * 100}>
+                <figure className="rounded-2xl border border-border bg-card p-3">
+                  <BeforeAfterSlider
+                    beforeSrc={item.before_image_url}
+                    afterSrc={item.after_image_url}
+                    alt={lang === "th" ? item.title_th : item.title_en}
+                    aspect="aspect-[16/12]"
+                  />
+                  <figcaption className="mt-3 px-1 pb-1 text-sm font-semibold">
+                    {lang === "th" ? item.title_th : item.title_en}
+                  </figcaption>
+                </figure>
               </Reveal>
             ))}
           </div>
@@ -174,22 +222,35 @@ function Home() {
               <h2 className="mt-3 text-3xl md:text-4xl font-bold">{tr("reviews_title")}</h2>
             </div>
           </Reveal>
+          {stats.total > 0 && (
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              {lang === "th"
+                ? `คะแนนเฉลี่ย ${stats.average.toFixed(1)} / 5 จาก ${stats.total} รีวิว`
+                : `${stats.average.toFixed(1)} / 5 average from ${stats.total} reviews`}
+            </p>
+          )}
           <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {[
-              { n: "คุณเอก", r: "ตัด Fade เนี้ยบมากพี่ ให้คำแนะนำทรงที่เหมาะกับหน้า ไปเป็นลูกค้าประจำแน่นอน" },
-              { n: "คุณโบ๊ท", r: "ร้านสะอาด แอร์เย็น ช่างใจดี ราคาไม่แพง มาตัดทุกเดือน" },
-              { n: "คุณจูน", r: "พาลูกชายมาตัด เด็กติดใจ ไม่ร้องเลย ช่างเก่งจริง ๆ" },
-            ].map((r, i) => (
-              <Reveal key={i} delay={i * 100}>
+            {featuredReviews.map((r, i) => (
+              <Reveal key={r.id} delay={i * 100}>
                 <div className="h-full rounded-xl border border-border bg-background p-6">
                   <div className="flex gap-0.5 mb-3">
-                    {Array.from({ length: 5 }).map((_, j) => <Star key={j} className="h-4 w-4 fill-gold text-gold" />)}
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <Star
+                        key={j}
+                        className={`h-4 w-4 ${j < r.rating ? "fill-gold text-gold" : "text-muted-foreground"}`}
+                      />
+                    ))}
                   </div>
-                  <p className="text-sm text-foreground/90 leading-relaxed">"{r.r}"</p>
-                  <p className="mt-4 text-sm font-semibold text-gold">— {r.n}</p>
+                  <p className="text-sm text-foreground/90 leading-relaxed">“{r.message}”</p>
+                  <p className="mt-4 text-sm font-semibold text-gold">— {r.name}</p>
                 </div>
               </Reveal>
             ))}
+          </div>
+          <div className="mt-8 text-center">
+            <Link to="/reviews" className="btn-outline-gold">
+              {lang === "th" ? "อ่าน/เขียนรีวิว" : "Read & write reviews"}
+            </Link>
           </div>
         </div>
       </section>
