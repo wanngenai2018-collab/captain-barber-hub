@@ -213,22 +213,35 @@ function Home() {
               <h2 className="mt-3 text-3xl md:text-4xl font-bold">{tr("reviews_title")}</h2>
             </div>
           </Reveal>
+          {stats.total > 0 && (
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              {lang === "th"
+                ? `คะแนนเฉลี่ย ${stats.average.toFixed(1)} / 5 จาก ${stats.total} รีวิว`
+                : `${stats.average.toFixed(1)} / 5 average from ${stats.total} reviews`}
+            </p>
+          )}
           <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {[
-              { n: "คุณเอก", r: "ตัด Fade เนี้ยบมากพี่ ให้คำแนะนำทรงที่เหมาะกับหน้า ไปเป็นลูกค้าประจำแน่นอน" },
-              { n: "คุณโบ๊ท", r: "ร้านสะอาด แอร์เย็น ช่างใจดี ราคาไม่แพง มาตัดทุกเดือน" },
-              { n: "คุณจูน", r: "พาลูกชายมาตัด เด็กติดใจ ไม่ร้องเลย ช่างเก่งจริง ๆ" },
-            ].map((r, i) => (
-              <Reveal key={i} delay={i * 100}>
+            {featuredReviews.map((r, i) => (
+              <Reveal key={r.id} delay={i * 100}>
                 <div className="h-full rounded-xl border border-border bg-background p-6">
                   <div className="flex gap-0.5 mb-3">
-                    {Array.from({ length: 5 }).map((_, j) => <Star key={j} className="h-4 w-4 fill-gold text-gold" />)}
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <Star
+                        key={j}
+                        className={`h-4 w-4 ${j < r.rating ? "fill-gold text-gold" : "text-muted-foreground"}`}
+                      />
+                    ))}
                   </div>
-                  <p className="text-sm text-foreground/90 leading-relaxed">"{r.r}"</p>
-                  <p className="mt-4 text-sm font-semibold text-gold">— {r.n}</p>
+                  <p className="text-sm text-foreground/90 leading-relaxed">“{r.message}”</p>
+                  <p className="mt-4 text-sm font-semibold text-gold">— {r.name}</p>
                 </div>
               </Reveal>
             ))}
+          </div>
+          <div className="mt-8 text-center">
+            <Link to="/reviews" className="btn-outline-gold">
+              {lang === "th" ? "อ่าน/เขียนรีวิว" : "Read & write reviews"}
+            </Link>
           </div>
         </div>
       </section>
