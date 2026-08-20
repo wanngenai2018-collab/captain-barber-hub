@@ -177,6 +177,8 @@ function About() {
         </div>
       </section>
 
+      <TeamSection />
+
       <section className="section bg-card">
         <div className="container-x">
           <Reveal>
