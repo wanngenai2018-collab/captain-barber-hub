@@ -182,14 +182,19 @@ function Home() {
             </div>
           </Reveal>
           <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {[ba1, ba2, ba3].map((src, i) => (
-              <Reveal key={i} delay={i * 100}>
-                <div className="relative overflow-hidden rounded-xl border border-border">
-                  <img src={src} alt={`Before and After ${i + 1}`} loading="lazy" className="h-full w-full object-cover aspect-[16/10]" />
-                  <div className="absolute top-3 left-3 rounded-full bg-gold text-gold-foreground text-xs font-bold px-3 py-1">
-                    BEFORE / AFTER
-                  </div>
-                </div>
+            {featuredGallery.map((item, i) => (
+              <Reveal key={item.id} delay={i * 100}>
+                <figure className="rounded-2xl border border-border bg-card p-3">
+                  <BeforeAfterSlider
+                    beforeSrc={item.before_image_url}
+                    afterSrc={item.after_image_url}
+                    alt={lang === "th" ? item.title_th : item.title_en}
+                    aspect="aspect-[16/12]"
+                  />
+                  <figcaption className="mt-3 px-1 pb-1 text-sm font-semibold">
+                    {lang === "th" ? item.title_th : item.title_en}
+                  </figcaption>
+                </figure>
               </Reveal>
             ))}
           </div>
