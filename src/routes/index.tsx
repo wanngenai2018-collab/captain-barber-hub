@@ -105,10 +105,19 @@ function Home() {
             </a>
           </div>
           <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-white/70 animate-fade-in">
-            <div className="flex items-center gap-1">
-              {Array.from({ length: 5 }).map((_, i) => <Star key={i} className="h-4 w-4 fill-gold text-gold" />)}
-              <span className="ml-2">4.9 / 5.0 · 320+ {lang === "th" ? "รีวิว" : "reviews"}</span>
-            </div>
+            {stats.total > 0 && (
+              <div className="flex items-center gap-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`h-4 w-4 ${i < Math.round(stats.average) ? "fill-gold text-gold" : "text-white/40"}`}
+                  />
+                ))}
+                <span className="ml-2">
+                  {stats.average.toFixed(1)} / 5.0 · {stats.total} {lang === "th" ? "รีวิว" : "reviews"}
+                </span>
+              </div>
+            )}
             <span>·</span>
             <span>{tr("footer_hours")}</span>
           </div>
