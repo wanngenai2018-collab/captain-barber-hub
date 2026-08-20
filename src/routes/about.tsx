@@ -6,10 +6,16 @@ import owner from "@/assets/owner.jpg";
 import interior from "@/assets/hero-shop.jpg";
 import { Award, Scissors, Users, UserPlus } from "lucide-react";
 import { getBarbers } from "@/lib/content.functions";
+import { getReviewsPayload } from "@/lib/reviews.functions";
 
 const barbersQueryOptions = queryOptions({
   queryKey: ["barbers"],
   queryFn: () => getBarbers(),
+});
+
+const aboutReviewsQueryOptions = queryOptions({
+  queryKey: ["reviews", "payload"],
+  queryFn: () => getReviewsPayload(),
 });
 
 function AboutError({ error }: { error: Error }) {
@@ -36,7 +42,12 @@ export const Route = createFileRoute("/about")({
     ],
     links: [{ rel: "canonical", href: "/about" }],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(barbersQueryOptions),
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(barbersQueryOptions),
+      context.queryClient.ensureQueryData(aboutReviewsQueryOptions),
+    ]);
+  },
   component: About,
   errorComponent: AboutError,
 });
@@ -111,6 +122,8 @@ function TeamSection() {
 
 function About() {
   const { tr, lang } = useI18n();
+  const { data: reviewsPayload } = useSuspenseQuery(aboutReviewsQueryOptions);
+  const stats = reviewsPayload.stats;
   return (
     <>
       <section className="section">
@@ -164,7 +177,7 @@ function About() {
               {[
                 { icon: Users, k: "5,000+", v: lang === "th" ? "ลูกค้า" : "Clients" },
                 { icon: Scissors, k: "20+", v: lang === "th" ? "ทรงถนัด" : "Signature cuts" },
-                { icon: Award, k: "4.9★", v: lang === "th" ? "คะแนนรีวิว" : "Rating" },
+                { icon: Award, k: stats.total > 0 ? `${stats.average.toFixed(1)}★` : "—", v: lang === "th" ? `คะแนนรีวิว (${stats.total})` : `Rating (${stats.total})` },
               ].map((s, i) => (
                 <div key={i} className="rounded-xl border border-border bg-card p-4 text-center">
                   <s.icon className="mx-auto h-5 w-5 text-gold" />
