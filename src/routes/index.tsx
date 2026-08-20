@@ -1,16 +1,38 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Phone, MessageCircle, Scissors, Star, ShieldCheck, Award, ChevronRight } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { SITE } from "@/lib/site";
 import { Reveal } from "@/components/Reveal";
+import { getReviewsPayload } from "@/lib/reviews.functions";
+import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
+import { getGalleryItems } from "@/lib/content.functions";
 import heroShop from "@/assets/hero-shop.jpg";
 import fade from "@/assets/service-fade.jpg";
 import shave from "@/assets/service-shave.jpg";
 import style from "@/assets/service-style.jpg";
 import color from "@/assets/service-color.jpg";
-import ba1 from "@/assets/ba-1.jpg";
-import ba2 from "@/assets/ba-2.jpg";
-import ba3 from "@/assets/ba-3.jpg";
+
+const homeReviewsQueryOptions = queryOptions({
+  queryKey: ["reviews", "payload"],
+  queryFn: () => getReviewsPayload(),
+});
+
+const homeGalleryQueryOptions = queryOptions({
+  queryKey: ["gallery", "items"],
+  queryFn: () => getGalleryItems(),
+});
+
+function HomeError({ error }: { error: Error }) {
+  return (
+    <section className="section">
+      <div className="container-x text-center">
+        <h1 className="text-3xl font-bold">หน้าแรกโหลดไม่สำเร็จ</h1>
+        <p className="mt-3 text-sm text-muted-foreground">{error.message}</p>
+      </div>
+    </section>
+  );
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,11 +41,23 @@ export const Route = createFileRoute("/")({
     ],
     links: [{ rel: "canonical", href: "/" }],
   }),
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(homeReviewsQueryOptions),
+      context.queryClient.ensureQueryData(homeGalleryQueryOptions),
+    ]);
+  },
   component: Home,
+  errorComponent: HomeError,
 });
 
 function Home() {
   const { tr, lang } = useI18n();
+  const { data: reviewsPayload } = useSuspenseQuery(homeReviewsQueryOptions);
+  const { data: galleryItems } = useSuspenseQuery(homeGalleryQueryOptions);
+  const stats = reviewsPayload.stats;
+  const featuredReviews = reviewsPayload.reviews.slice(0, 3);
+  const featuredGallery = galleryItems.slice(0, 3);
 
   const services = [
     { img: fade, t: lang === "th" ? "Fade / รองทรง" : "Fade / Taper", p: "฿100" },
